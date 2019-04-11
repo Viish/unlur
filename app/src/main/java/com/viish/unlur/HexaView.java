@@ -21,33 +21,42 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Path;
+import android.graphics.Rect;
 import android.graphics.Region;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 
 import androidx.annotation.Nullable;
 
 public class HexaView extends View {
+    private Context mContext;
     private Path hexagonPath, hexagonContourPath;
     private int mColor;
+    private int mQ, mR;
+    private HexaListener mListener;
 
     public HexaView(Context context) {
         super(context);
+        mContext = context;
         init();
     }
 
     public HexaView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
+        mContext = context;
         init();
     }
 
     public HexaView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
+        mContext = context;
         init();
     }
 
     public HexaView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
+        mContext = context;
         init();
     }
 
@@ -55,10 +64,76 @@ public class HexaView extends View {
         hexagonPath = new Path();
         hexagonContourPath = new Path();
         mColor = Color.GRAY;
+        mQ = 0;
+        mR = 0;
+    }
+
+    public void setCoords(int q, int r) {
+        mQ = q;
+        mR = r;
+        if (mListener != null) {
+            mListener.onHexaCreated(this, q, r);
+        }
+    }
+
+    public int getQ() {
+        return mQ;
+    }
+
+    public int getR() {
+        return mR;
+    }
+    
+    public void setListener(HexaListener listener) {
+        mListener = listener;
     }
 
     public void setColor(int color) {
-        mColor = color;
+        if (color != mColor) {
+            mColor = color;
+            invalidate();
+        }
+    }
+
+    public int getColor() {
+        return mColor;
+    }
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+        if (!isEnabled()) return false;
+
+        switch (event.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                setColor(Color.GREEN);
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (isMotionEventInsideView(event)) {
+                    setColor(Color.GREEN);
+                } else {
+                    setColor(Color.GRAY);
+                }
+                break;
+            case MotionEvent.ACTION_UP:
+                if (!isMotionEventInsideView(event)) {
+                    setColor(Color.GRAY);
+                } else {
+                    if (mListener != null) {
+                        boolean ok = mListener.onHexaSelected(this, mQ, mR);
+                        if (!ok) {
+                            setColor(Color.GRAY);
+                        }
+                    }
+                }
+                break;
+        }
+        return true;
+    }
+
+    private boolean isMotionEventInsideView(MotionEvent event) {
+        Rect viewRect = new Rect(getLeft(), getTop(), getRight(), getBottom());
+
+        return viewRect.contains(getLeft() + (int) event.getX(),getTop() + (int) event.getY());
     }
 
     private void calculatePath(float radius) {

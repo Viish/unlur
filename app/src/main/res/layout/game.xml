@@ -11,4 +11,28 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/game_board"
+        android:paddingTop="10dp"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_centerHorizontal="true">
+
+        <Button
+            android:id="@+id/black_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Stay black"/>
+
+        <Button
+            android:id="@+id/undo_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Undo"/>
+
+
+    </LinearLayout>
+
 </RelativeLayout>

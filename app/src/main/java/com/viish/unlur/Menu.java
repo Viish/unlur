@@ -21,10 +21,15 @@ import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.SeekBar;
+import android.widget.TextView;
 
 import androidx.annotation.Nullable;
 
 public class Menu extends Activity {
+    private TextView mBoardSizeLabel;
+    private SeekBar mBoardSize;
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,8 +38,31 @@ public class Menu extends Activity {
         findViewById(R.id.menu_button_play).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                startActivity(new Intent(Menu.this, Game.class));
+                Intent intent = new Intent(Menu.this, Game.class);
+                intent.putExtra("BoardSize", Integer.valueOf(mBoardSizeLabel.getText().toString()));
+                startActivity(intent);
             }
         });
+
+        mBoardSize = findViewById(R.id.menu_board_size);
+        mBoardSize.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                mBoardSizeLabel.setText(String.valueOf(progress));
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) {
+
+            }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) {
+
+            }
+        });
+
+        mBoardSizeLabel = findViewById(R.id.menu_text_board_size);
+        mBoardSizeLabel.setText(String.valueOf(mBoardSize.getProgress()));
     }
 }

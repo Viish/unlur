@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/colorAccent">
+    android:background="@android:color/white">
 
     <Button
         android:id="@+id/menu_button_play"
@@ -10,5 +10,23 @@
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:text="Play"/>
+
+    <SeekBar
+        android:id="@+id/menu_board_size"
+        android:layout_width="300dp"
+        android:layout_height="wrap_content"
+        android:progress="3"
+        android:max="10"
+        android:layout_centerHorizontal="true"
+        android:paddingTop="10dp"
+        android:layout_below="@id/menu_button_play"/>
+
+    <TextView
+        android:id="@+id/menu_text_board_size"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:paddingTop="10dp"
+        android:layout_below="@id/menu_board_size"/>
 
 </RelativeLayout>

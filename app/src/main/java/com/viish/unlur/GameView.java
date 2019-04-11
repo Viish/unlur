@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>
 */
 
 import android.content.Context;
+import android.graphics.Color;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
 
@@ -27,34 +28,61 @@ public class GameView extends ViewGroup {
     public static int HEX_COUNT = 6;
 
     private Context mContext;
+    private int mBoardGameSize;
+    private int mHexaWidth, mHexaHeight, mHexaSide, mLines;
+    private boolean mSidesEnabled;
+    private HexaListener mListener;
 
-    public GameView(Context context) {
+    public GameView(Context context, int size) {
         super(context);
         mContext = context;
+        mBoardGameSize = size;
         init();
     }
 
     public GameView(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
         mContext = context;
+        mBoardGameSize = HEX_COUNT;
         init();
     }
 
     public GameView(Context context, @Nullable AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         mContext = context;
+        mBoardGameSize = HEX_COUNT;
         init();
     }
 
     public GameView(Context context, @Nullable AttributeSet attrs, int defStyleAttr, int defStyleRes) {
         super(context, attrs, defStyleAttr, defStyleRes);
         mContext = context;
+        mBoardGameSize = HEX_COUNT;
         init();
     }
 
+    public void setSize(int newSize) {
+        mBoardGameSize = newSize;
+        init();
+        invalidate();
+    }
+
+    public void setListener(HexaListener listener) {
+        mListener = listener;
+    }
+
     private void init() {
-        int count = 91; //TODO Compute
-        for (int i = 0; i < count; i++) {
+        // This can probably be improved...
+        int max = mBoardGameSize * 2 - 1;
+        int sum = 0;
+        for (int i = mBoardGameSize; i <= max; i++) {
+            sum += i;
+        }
+        for (int i = max - 1; i >= mBoardGameSize; i--) {
+            sum += i;
+        }
+
+        for (int i = 0; i < sum; i++) {
             addView(new HexaView(mContext));
         }
     }
@@ -68,59 +96,67 @@ public class GameView extends ViewGroup {
         final int childWidth = childRight - childLeft;
         final int childHeight = childBottom - childTop;
 
-        int hexCountHeight = HEX_COUNT * 2 - 1;
-        final int hexaMaxSize = childWidth / hexCountHeight;
+        mLines = mBoardGameSize * 2 - 1;
+        final int hexaMaxSize = childWidth / mLines;
 
         HexaView hexa = (HexaView) getChildAt(0);
         hexa.measure(MeasureSpec.makeMeasureSpec(hexaMaxSize, MeasureSpec.EXACTLY),
                 MeasureSpec.makeMeasureSpec(childHeight, MeasureSpec.AT_MOST));
 
-        int hexaWidth = hexa.getMeasuredWidth();
-        int hexaHeight = hexa.getMeasuredHeight();
-        int hexaSide = Math.round(Math.round(hexaWidth / Math.sqrt(3)));
+        mHexaWidth = hexa.getMeasuredWidth();
+        mHexaHeight = hexa.getMeasuredHeight();
+        mHexaSide = Math.round(Math.round(mHexaWidth / Math.sqrt(3)));
         // Since we don't want any space between the hex, the real size of a hex is 3/2 * it's side
         // (top hat + a side)
-        int hexaFakeHeight = 3 * hexaSide / 2;
+        int hexaFakeHeight = 3 * mHexaSide / 2;
 
-        int marginTop = (childHeight - (hexaFakeHeight * hexCountHeight)) / 2;
+        int marginTop = (childHeight - (hexaFakeHeight * mLines)) / 2;
 
         int childIndex = 0;
-        for (int i = 0; i < HEX_COUNT; i++) {
-            int widthCount = HEX_COUNT + i;
-            int marginLeft = (childWidth - (widthCount * hexaWidth)) / 2;
+        for (int i = 0; i < mBoardGameSize; i++) {
+            int widthCount = mBoardGameSize + i;
+            int marginLeft = (childWidth - (widthCount * mHexaWidth)) / 2;
             for (int j = 0; j < widthCount; j++) {
                 hexa = (HexaView) getChildAt(childIndex);
+                hexa.setListener(mListener);
+
                 hexa.measure(MeasureSpec.makeMeasureSpec(hexaMaxSize, MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(childHeight, MeasureSpec.AT_MOST));
 
-                int spaceToRemove = i * (hexaHeight - hexaFakeHeight);
+                int spaceToRemove = i * (mHexaHeight - hexaFakeHeight);
 
-                hexa.layout(marginLeft + j * hexaWidth,
-                        marginTop - spaceToRemove + i * hexaHeight,
-                        marginLeft + (j + 1) * hexaWidth,
-                        marginTop - spaceToRemove + (i + 1) * hexaHeight);
+                hexa.layout(marginLeft + j * mHexaWidth,
+                        marginTop - spaceToRemove + i * mHexaHeight,
+                        marginLeft + (j + 1) * mHexaWidth,
+                        marginTop - spaceToRemove + (i + 1) * mHexaHeight);
                 childIndex += 1;
+
+                hexa.setCoords(mBoardGameSize - widthCount + j, i - mBoardGameSize + 1);
             }
         }
 
-        marginTop += HEX_COUNT * hexaFakeHeight;
+        marginTop += mBoardGameSize * hexaFakeHeight;
 
-        for (int i = HEX_COUNT - 1; i > 0; i--) {
-            int widthCount = hexCountHeight - (HEX_COUNT - i);
-            int marginLeft = (childWidth - (widthCount * hexaWidth)) / 2;
+        for (int i = mBoardGameSize - 1; i > 0; i--) {
+            int widthCount = mLines - (mBoardGameSize - i);
+            int marginLeft = (childWidth - (widthCount * mHexaWidth)) / 2;
             for (int j = widthCount; j > 0; j--) {
                 hexa = (HexaView) getChildAt(childIndex);
+                hexa.setListener(mListener);
+
                 hexa.measure(MeasureSpec.makeMeasureSpec(hexaMaxSize, MeasureSpec.EXACTLY),
                         MeasureSpec.makeMeasureSpec(childHeight, MeasureSpec.AT_MOST));
 
-                int spaceToRemove = (HEX_COUNT - 1 - i) * (hexaHeight - hexaFakeHeight);
+                int spaceToRemove = (mBoardGameSize - 1 - i) * (mHexaHeight - hexaFakeHeight);
 
-                hexa.layout(marginLeft + (widthCount - j) * hexaWidth,
-                        marginTop - spaceToRemove + (HEX_COUNT - 1 - i) * hexaHeight,
-                        marginLeft + ((widthCount - j) + 1) * hexaWidth,
-                        marginTop - spaceToRemove + (HEX_COUNT - i) * hexaHeight);
+                hexa.layout(marginLeft + (widthCount - j) * mHexaWidth,
+                        marginTop - spaceToRemove + (mBoardGameSize - 1 - i) * mHexaHeight,
+                        marginLeft + ((widthCount - j) + 1) * mHexaWidth,
+                        marginTop - spaceToRemove + (mBoardGameSize - i) * mHexaHeight);
 
                 childIndex += 1;
+
+                hexa.setCoords(1 - mBoardGameSize + (widthCount - j), mBoardGameSize - i);
             }
         }
     }
